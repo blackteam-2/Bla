@@ -42,6 +42,7 @@ const int wire1 = 22;
 const int wire2 = 24;
 const int wire3 = 26;
 const int wire4 = 28;
+const int Alarm;
 
 //--------------------------------------------------
 //---------------Variable definations---------------
