@@ -6,11 +6,12 @@ Development board: Arduino mega 2560
 
 Code:
 Version: V1.1.5
-last updated: 18-2-2013
+last updated: 18-12-2013
 
 Notes:
-- Tilt switch not currently addad
-- Battery monitor not added
+- Tilt switch not currently added
+
+
 */
 
 #include <LiquidCrystal.h>
@@ -42,7 +43,6 @@ const int wire1 = 22;
 const int wire2 = 24;
 const int wire3 = 26;
 const int wire4 = 28;
-const int Alarm;
 
 //--------------------------------------------------
 //---------------Variable definations---------------
@@ -50,7 +50,7 @@ const int Alarm;
 
 //State variables
 int mode = 1;
-int run = 0;.
+int run = 0;
 int progState = 0;
 int statea = 0;
 
@@ -90,7 +90,7 @@ int safeWire = 0;
 float battLow = 8.8;
 float battEmp = 8.0;
 boolean bla = false;
-boolean flag = false;
+volatile boolean flag = false;
 float volt = 0;
 int voltInt = 0;
 int i = 0;
@@ -121,7 +121,7 @@ void setup(){
 
   OCR1A = 31250;           
   TCCR1B |= (1 << WGM12);   
-  TCCR1B |= (1 << CS12);    
+  TCCR1B |= (1 << CS12);                                                                                         
   TIMSK1 |= (1 << OCIE1A);  
   interrupts(); 
   
@@ -176,7 +176,7 @@ void running(){
   
   if(programed == true){
     
-    //Clear the lcd once at begining, get starting time for timer
+    //Clear the lcd once at beginning, get starting time for timer
     if(lcdLck == false){
      lcd.clear();
      lcdLck = true;
@@ -187,6 +187,9 @@ void running(){
       case 1://Armed
           lcd.setCursor(0, 0);
           lcd.print("     Armed      ");
+		  //lcd.print(volt);
+		  //lcd.print(" , ");
+		  //lcd.print(voltInt);
           lcd.setCursor(0, 1);
           
           //Timer
@@ -444,7 +447,7 @@ void program(){
       }
     break;
     
-    //----------------------------------Set up ------------------------------------
+    //------------------------------------Set up--------------------------------------
     case 5:
     
       switch(mode){
@@ -696,7 +699,7 @@ void program(){
     }
     break;
     
-    //------------------------------------Set up compleate, move key----------------------------------
+    //------------------------------------Set up complete, move key----------------------------------
     case 6:
       lcd.setCursor(0, 0);
       lcd.print("Remove prog key ");
@@ -711,13 +714,15 @@ void program(){
       keyDis = false;
       keypadDis = false;
       bang = false;
+	  timerTrig = false;
+	  attemCount = attempts;
       disarmed = false;
       lcdLck = false;
       setLED(1);
     break;
    }
  }
- else if(armed == false){//--------------------------------Set up is already compleate-----------------------------------
+ else if(armed == false){//--------------------------------Set up is already complete-----------------------------------
  
    //reset variables
    if(armLck == false){
@@ -735,6 +740,7 @@ void program(){
        but = keypadA.getKey();
       
        if (but == '#'){
+		 statea = 13;
          but = NO_KEY;
        }
        else if (but == '*'){
@@ -791,6 +797,52 @@ void program(){
          but = NO_KEY;
        }
      break;
+     
+     case 13:
+		 lcd.setCursor(0, 0);
+		 lcd.print("Reuse current   ");
+		 lcd.setCursor(0, 1);
+		 lcd.print("*-Yes       #-No");
+     
+		 but = keypadA.getKey();
+		 
+		 if (but == '*'){
+			 statea = 14;
+			 but = NO_KEY;
+		 }
+		 else if (but == '#'){
+			 statea = 11;
+			 but = NO_KEY;
+		 }
+     break;
+	 
+	 case 14:
+		lcd.setCursor(0, 0);
+		lcd.print("  Are you sure  ");
+		lcd.setCursor(0, 1);
+		lcd.print("*-Yes       #-No");
+		
+		but = keypadA.getKey();
+		
+		if (but == '*')
+		{
+			armed = true;
+			progState = 6;
+			lKey =  !digitalRead(largeKey);
+			butt[0] = '-';
+			butt[1] = '-';
+			butt[2] = '-';
+			butt[3] = '-';
+			but = NO_KEY;
+		}
+		if (but == '#')
+		{
+			statea = 13;
+			but = NO_KEY;
+		}
+		
+		
+	 break;
    }
  }
 }
@@ -844,8 +896,9 @@ void setLED(int q){
 void boo(){
   //Get batt voltage / by 2
   voltInt = analogRead(A5);
+  
   //convert to Volts then * by 2 to accounnt for voltage divider
-  volt = (((voltInt - 0)*5)/1024) * 2;
+  volt = (float) ((((voltInt - 0.0)*5.0)/1024.0) * 2.0);
   
   //
   if((armed == true) && (statea == 1)){
