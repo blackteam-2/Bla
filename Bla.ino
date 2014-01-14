@@ -6,7 +6,7 @@ Development board: Arduino mega 2560
 
 Code:
 Version: V1.1.5
-last updated: 18-12-2013
+last updated: 14-01-2014
 
 Notes:
 - Tilt switch not currently added
@@ -33,7 +33,7 @@ Keypad keypadA = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 //Set up LCD
 LiquidCrystal lcd(43, 45, 47, 49, 51, 53);
 
-//Pin definations 
+//Pin definitions 
 const int RLED = 23;
 const int GLED = 25;
 const int BLED = 27;
@@ -43,9 +43,10 @@ const int wire1 = 22;
 const int wire2 = 24;
 const int wire3 = 26;
 const int wire4 = 28;
+const int buzzer = 2;
 
 //--------------------------------------------------
-//---------------Variable definations---------------
+//---------------Variable definitions---------------
 //--------------------------------------------------
 
 //State variables
@@ -95,7 +96,7 @@ float volt = 0;
 int voltInt = 0;
 int i = 0;
 int j = 0;
-
+int buzzerHigh = 60000;
 
 //==============================================================================================
 //===========================================SETUP FUNCTION=====================================
@@ -112,6 +113,7 @@ void setup(){
   pinMode(wire4, INPUT);
   pinMode(largeKey, INPUT);
   pinMode(smallKey, INPUT);
+  pinMode(buzzer, OUTPUT);
 
   //Set up timer for blinking LED
   noInterrupts();          
@@ -180,6 +182,9 @@ void running(){
     if(lcdLck == false){
      lcd.clear();
      lcdLck = true;
+	 timer3(buzzerHigh);
+	 delay(600);
+	 timer3(0);
      startTime = millis();
     }
     
@@ -329,7 +334,11 @@ void running(){
 
 //======================================Program=========================================
 void program(){
+	
  setLED(4);//Turn Blue LED on
+ bang = false;
+ timer3(0);
+ 
  if((programed == false) || (armed == true)){
    switch(progState){
     //---------------------------------Use keypad------------------------------------
@@ -938,6 +947,33 @@ void boo(){
   }
 }
 
+//
+void timer3(int q)
+{
+	//if(q == 0)
+	//{
+		//TCCR3B &= !(1 << CS31); //Stop timer, set all clk bits to 0
+		//delay(1);
+		//digitalWrite(buzzer, LOW); // ensure IO pin is low after timer is stopped
+	//}
+	//TCCR3A |= (1 << COM3B1);//Non inverting hardware PWM on arduino pin 2
+	//TCCR3B |= (1 << WGM30) | (1 << WGM31) | (1 << WGM32) | (1 << WGM33);// fast pwm, top of OCR3A
+	//TCNT3 = 0; //Timer 3 counter
+	//OCR3A = 65535; // Set top value
+	//OCR3B = q; // reload value
+	//TCCR3B |= (1 << CS31); //Set clock to 16MHz / 8 and start timer
+	
+	if (q == 0)
+	{
+		digitalWrite(buzzer,LOW);
+	} 
+	else
+	{
+		digitalWrite(buzzer,HIGH);
+	}
+	
+}
+
 //Timer 1 Compare A interupt vector
 ISR(TIMER1_COMPA_vect){
   
@@ -964,10 +1000,12 @@ ISR(TIMER1_COMPA_vect){
   if((bang == true) || (timerTrig == true)){
     if(j == 0){
       setLED(0);
+	  timer3(buzzerHigh);
       j = 1;
     }
     else{
       setLED(1);
+	  timer3(0);
       j = 0; 
     }
   }

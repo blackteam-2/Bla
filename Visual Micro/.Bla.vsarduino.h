@@ -19,6 +19,7 @@ void running();
 void program();
 void setLED(int q);
 void boo();
+void timer3(int q);
 
 #include "E:\Dropbox\Projects\arduino-1.0.5\hardware\arduino\variants\mega\pins_arduino.h" 
 #include "E:\Dropbox\Projects\arduino-1.0.5\hardware\arduino\cores\arduino\arduino.h"
